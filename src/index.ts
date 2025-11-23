@@ -1,52 +1,83 @@
-import express from 'express'
-import path from 'path'
-import { fileURLToPath } from 'url'
+import express from "express";
+import { MongoClient, ObjectId } from "mongodb";
 
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename)
+const app = express();
+app.use(express.json());
 
-const app = express()
+// -----------------------------
+// MONGO CONNECTION (Single File)
+// -----------------------------
+const MONGO_URI = process.env.MONGODB_URI;  // Add in Vercel env
+const DB_NAME = "mydb";                     // Change if needed
 
-// Home route - HTML
-app.get('/', (req, res) => {
-  res.type('html').send(`
-    <!doctype html>
-    <html>
-      <head>
-        <meta charset="utf-8"/>
-        <title>Express on Vercel</title>
-        <link rel="stylesheet" href="/style.css" />
-      </head>
-      <body>
-        <nav>
-          <a href="/">Home</a>
-          <a href="/about">About</a>
-          <a href="/api-data">API Data</a>
-          <a href="/healthz">Health</a>
-        </nav>
-        <h1>Welcome to Express on Vercel 🚀</h1>
-        <p>This is a minimal example without a database or forms.</p>
-        <img src="/logo.png" alt="Logo" width="120" />
-      </body>
-    </html>
-  `)
-})
+let db;
+let client;
 
-app.get('/about', function (req, res) {
-  res.sendFile(path.join(__dirname, '..', 'components', 'about.htm'))
-})
+async function connectDB() {
+  if (db) return db; // reuse connection (important for Vercel)
+  
+  client = new MongoClient(MONGO_URI);
+  await client.connect();
+  db = client.db(DB_NAME);
+  console.log("MongoDB connected");
+  return db;
+}
 
-// Example API endpoint - JSON
-app.get('/api-data', (req, res) => {
-  res.json({
-    message: 'Here is some sample API data',
-    items: ['apple', 'banana', 'cherry'],
-  })
-})
+// -----------------------------
+// CRUD API (Queries in Body)
+// -----------------------------
+
+// CREATE (Insert)
+app.post("/insert", async (req, res) => {
+  try {
+    const { collection, data } = req.body;
+    const db = await connectDB();
+    const result = await db.collection(collection).insertOne(data);
+    res.json({ insertedId: result.insertedId });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// READ (Get records)
+app.post("/get", async (req, res) => {
+  try {
+    const { collection, query = {}, limit = 100 } = req.body;
+    const db = await connectDB();
+    const result = await db.collection(collection).find(query).limit(limit).toArray();
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// UPDATE (Update records)
+app.post("/update", async (req, res) => {
+  try {
+    const { collection, query, update } = req.body;
+    const db = await connectDB();
+    const result = await db.collection(collection).updateMany(query, { $set: update });
+    res.json({ matched: result.matchedCount, modified: result.modifiedCount });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// DELETE (Remove records)
+app.post("/delete", async (req, res) => {
+  try {
+    const { collection, query } = req.body;
+    const db = await connectDB();
+    const result = await db.collection(collection).deleteMany(query);
+    res.json({ deleted: result.deletedCount });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 // Health check
-app.get('/healthz', (req, res) => {
-  res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() })
-})
+app.get("/healthz", (req, res) => {
+  res.json({ status: "ok", time: new Date().toISOString() });
+});
 
-export default app
+export default app;

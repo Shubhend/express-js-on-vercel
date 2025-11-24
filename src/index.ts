@@ -9,7 +9,7 @@ app.use(express.json());
 // -----------------------------
 // 🔥 MONGO CONNECTION (with logs)
 // -----------------------------
-const MONGO_URI = "mongodb+srv://admin:Wopensys123@cluster0.f7qrlql.mongodb.net/?appName=Cluster0;
+const MONGO_URI = "mongodb+srv://admin:Wopensys123@cluster0.f7qrlql.mongodb.net/?appName=Cluster0";
 const DB_NAME = "admin";
 
 let db;

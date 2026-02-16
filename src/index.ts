@@ -1,6 +1,7 @@
 import express from "express";
 import { MongoClient } from "mongodb";
 import cors from "cors"; // ✅ Import cors
+import { ObjectId } from "mongodb";
 console.log("🔥 Server starting... Loading Express + MongoDB API");
 
 const app = express();
@@ -98,6 +99,12 @@ app.post("/update", async (req, res) => {
     console.log("🔍 Query:", query);
     console.log("♻ Update:", update);
 
+      // Convert _id string to ObjectId if present
+    if (query._id && typeof query._id === "string") {
+      query._id = new ObjectId(query._id);
+      console.log("🛠 Converted _id to ObjectId:", query._id);
+    }
+
     const db = await connectDB();
     const result = await db.collection(collection).updateMany(query, { $set: update });
 
@@ -126,6 +133,11 @@ app.post("/delete", async (req, res) => {
     const { collection, query } = req.body;
     console.log(`🗂 Collection: ${collection}`);
     console.log("🗑 Query:", query);
+      // Convert _id string to ObjectId if present
+    if (query._id && typeof query._id === "string") {
+      query._id = new ObjectId(query._id);
+      console.log("🛠 Converted _id to ObjectId:", query._id);
+    }
 
     const db = await connectDB();
     const result = await db.collection(collection).deleteMany(query);

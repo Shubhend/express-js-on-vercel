@@ -1,9 +1,11 @@
 import express from "express";
 import { MongoClient } from "mongodb";
-
+import cors from "cors"; // ✅ Import cors
 console.log("🔥 Server starting... Loading Express + MongoDB API");
 
 const app = express();
+// Enable CORS for all routes
+app.use(cors());
 app.use(express.json());
 
 // -----------------------------

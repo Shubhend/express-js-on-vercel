@@ -72,12 +72,12 @@ app.post("/get", async (req, res) => {
   console.log("📥 Body:", req.body);
 
   try {
-    const { collection, query = {}, limit = 100 } = req.body;
+    const { collection, query = {}, limit = 100 ,  sort={_id:-1} } = req.body;
     console.log(`🗂 Collection: ${collection}`);
     console.log("🔍 Query:", query);
 
     const db = await connectDB();
-    const result = await db.collection(collection).find(query).limit(limit).toArray();
+    const result = await db.collection(collection).find(query).sort(sort).limit(limit).toArray();
 
     console.log("📤 Returning results:", result.length);
     res.json(result);
@@ -94,7 +94,7 @@ app.post("/update", async (req, res) => {
   console.log("📥 Body:", req.body);
 
   try {
-    const { collection, query, update } = req.body;
+    const { collection, query, update} = req.body;
     console.log(`🗂 Collection: ${collection}`);
     console.log("🔍 Query:", query);
     console.log("♻ Update:", update);
